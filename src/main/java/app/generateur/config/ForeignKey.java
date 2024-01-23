@@ -1,8 +1,16 @@
-package app.megashop.config;
+package app.generateur.config;
 
 public class ForeignKey {
     private String forienName;
     private String forienClass;
+
+    public String getForienName() {
+        return forienName;
+    }
+
+    public String getForienClass() {
+        return forienClass;
+    }
 
     public ForeignKey(String forienName, String forienClass) {
         this.forienName = forienName;

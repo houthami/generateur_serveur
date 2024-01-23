@@ -1,4 +1,4 @@
-package app.megashop.config;
+package app.generateur.config;
 
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;

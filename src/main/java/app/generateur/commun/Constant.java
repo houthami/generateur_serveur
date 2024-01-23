@@ -1,8 +1,4 @@
-package app.megashop.commun;
-
-import org.springframework.stereotype.Component;
-
-@Component
+package app.generateur.commun;
 public class Constant {
     public static final String BEGINTABLE = "create table";
     public static final String TABLEINVCAMBER = ");";
@@ -11,16 +7,18 @@ public class Constant {
     public static final String CAMBER = "(";
     public static final String PRIMARYKEY = "primary key";
     public static final String FOREIGNKEY = "foreign key";
+    public static final String INDEXKEY = "CREATE UNIQUE INDEX";
     public static final String REFERENCES = "references";
-    public static  final String PATHRELATIVE = "\\src\\main\\java\\app\\megashop\\entity";
-    public static final String ENTITYTEMPLATE = "package app.megashop.entity;\n"+
+    public static  final String PATHRELATIVE = "\\src\\main\\java\\app\\generateur\\";
+    public static final String ENTITYTEMPLATE = "package app.generateur.entity;\n"+
                                                       "\n"+
-                                                      "import org.springframework.data.annotation.Id;\n" +
+                                                      "import jakarta.persistence.Id;\n" +
                                                       "import org.springframework.stereotype.Component;\n" +
                                                       "import javax.persistence.Column;\n" +
+                                                      "import javax.persistence.*;\n" +
                                                       "\n" +
                                                       "__IMPORTS\n" +
-                                                      "import javax.persistence.Entity;\n" +
+                                                      "import jakarta.persistence.Entity;\n" +
                                                       "import javax.persistence.GeneratedValue;\n"+
                                                       "import javax.persistence.GenerationType;\n"+
                                                       "import javax.persistence.Table;\n"+
@@ -29,37 +27,45 @@ public class Constant {
                                                       "@Component\n"+
                                                       "@Table(name=\"__TABLENAME\")\n" +
                                                       "public class __CLASSNAME extends BasicEntity {\n"+
+                                                      "__PRIMARYKEY\n"+
                                                       "__CLASSATTRIBUTS\n"+
                                                       "\n"+
                                                       "__CLASSFUNCTION\n"+
-                                                      "}";
+                                                      "}\n"+
+            "__IDCOMLEX";
 
-    public static final String REPOSITORYTEMPLATE = "package app.megashop.entity;\n"+
-            "\n"+
-            "import org.springframework.data.annotation.Id;\n" +
-            "import org.springframework.stereotype.Component;\n" +
-            "import javax.persistence.Column;\n" +
-            "\n" +
-            "__IMPORTS\n" +
-            "import javax.persistence.Entity;\n"+
-            "import javax.persistence.Table;\n"+
-            "\n"+
-            "@Entity\n"+
-            "@Component\n"+
-            "@Table(name=\"__TABLENAME\")\n" +
-            "public class __CLASSNAME extends BasicEntity {\n"+
-            "__CLASSATTRIBUTS\n"+
-            "\n"+
-            "__CLASSFUNCTION\n"+
-            "}";
+    public static final String REPOSITORYTEMPLATE = "package app.generateur.repository;\n"+
+                                                    "\n"+
+                                                    "import org.springframework.data.repository.CrudRepository;\n" +
+                                                    "\n" +
+                                                    "__IMPORTS\n" +
+                                                    "public interface __CLASSNAMERepository extends CrudRepository<__CLASSNAME, Long> {\n"+
+                                                    "__CLASSFUNCTION\n"+
+                                                    "}";
+
+    public static final String IDCOMPLEX =  "package app.generateur.entity.entityId;\n" +
+                                            "import java.io.Serializable;\n" +
+                                            "\n" +
+                                            "public class DmsMetadataDocId implements Serializable {\n" +
+                                            "\n" +
+                                            "__CLASSATTRIBUTS\n"+
+                                            "\n" +
+                                            "    // Constructors, getters, setters, equals, and hashCode methods\n" +
+                                            "}";
     public static final String PRIMARYID = "@Id";
     public static final String GENERATEDVALUE = "@GeneratedValue(strategy = GenerationType.AUTO)";
     public static final String COLUMN = "@Column";
     public static final String ENTITY = "@Entity";
     public static final String ONETOMANY = "@OneToMany(mappedBy=\"__MAPPEDBY\")";
-    public static final String MANYTOONE = "@ManyToOne";
-    public static final String JOINCOLUMN = "@JoinColumn(name=\"__COLUMNID\", nullable=__NULLABLE)";
-    public static final String COLUMNANNOTATION = "@Column(name=\"__COLUMNID\", nullable=__NULLABLE, length=__LENGTH)";
+    public static final String MANYTOONE = "@ManyToOne(fetch = FetchType.LAZY, optional = false)";
+    public static final String ONETOONE = "@OneToOne(cascade = CascadeType.ALL)";
+    public static final String JOINCOLUMNANNOATATION = "@JoinColumn(name=\"__COLUMNID\"__NULLABLE__REFERENCE__UNIQUE)";
+    public static final String COLUMNANNOTATION = "@Column(name=\"__COLUMNID\"__NULLABLE__LENGTH__UNIQUE)";
+
+    public static final String UNIQUEANNOTATION = ", unique=";
+    public static final String LENGTHANNOTATION = ", length=";
+    public static final String NULLABLEANNOTATION = ", nullable=";
+    public static final String REFERENCEANNOTATION = ", referencedColumnName = ";
     public static final String TABLEANNOTATION = "@Table(name=\"__TABLENAME\")";
     public static final String PRK = "private";
     public static final String PTK = "protected";
@@ -80,4 +86,6 @@ public class Constant {
     public static final String REPOSITORYKEY = "repository";
     public static final String SERVICEKEy = "service";
     public static final String DTOKEY = "dto";
+    public static final String ISFORIENKEY = "isforienkey";
+    public static final String ISINDEXEDKEY = "isindexedkey";
 }

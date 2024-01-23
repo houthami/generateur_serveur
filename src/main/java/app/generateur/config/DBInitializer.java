@@ -1,13 +1,15 @@
-package app.megashop.config;
+package app.generateur.config;
 
-import app.megashop.commun.Constant;
+import app.generateur.commun.Constant;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.springframework.util.ResourceUtils;
 
 import java.io.*;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.IntStream;
 
 public class DBInitializer {
@@ -15,10 +17,10 @@ public class DBInitializer {
     public DBInitializer()  {
         try{
             init();
+            System.out.println("MyBean constructor");
         } catch(FileNotFoundException e){
             System.out.println(e);
         }
-        System.out.println("MyBean constructor");
     }
 
     @PostConstruct
@@ -69,18 +71,27 @@ public class DBInitializer {
         TableAttributs tableAtt = TableAttributs.generateTableAtts(table);
         String className = NameClass(tableAtt.getName());
         String dir = System.getProperty("user.dir");
-        dir = dir+Constant.PATHRELATIVE;
         System.out.println("current dir = " + dir);
 
         try{
-            Map<String, Map<String, String>> content = generateClasseFormatFromTable(tableAtt, tableAtt.getPrimaryKey());
+            Map<String, Map<String, String>> content = generateClasseFormatFromTable(tableAtt, tableAtt.getPrimariesKey());
             Map<String, String> entity = content.getOrDefault(Constant.ENTITYKEY, new HashMap<>());
+            Map<String, String> repository = content.getOrDefault(Constant.REPOSITORYKEY, new HashMap<>());
+            repository.put(Constant.IMPORTS, "import app.generateur.entity."+className+";");
             String entityContent = tableAtt.toString(Constant.ENTITYKEY).replaceFirst("__IMPORTS", entity.getOrDefault(Constant.IMPORTS, "\n"))
                     .replaceFirst("__CLASSATTRIBUTS", entity.getOrDefault(Constant.ATTRIBUTS, "\n"))
+                    .replaceFirst("__CLASSFUNCTION", "")
+                    .replaceFirst("__PRIMARYKEY", tableAtt.getPrimariesKey().size() == 0? "@Id\n private Long id;\n": "")
+                    .replaceFirst("__IDCOMLEX", "");
+            String repositoryContent = tableAtt.toString(Constant.REPOSITORYKEY).replaceFirst("__IMPORTS", repository.getOrDefault(Constant.IMPORTS, "\n"))
+                    .replaceFirst("__CLASSATTRIBUTS", repository.getOrDefault(Constant.ATTRIBUTS, "\n"))
                     .replaceFirst("__CLASSFUNCTION", "");
-            FileWriter entityFile = new FileWriter(dir+"\\"+className+".java");
+            FileWriter entityFile = new FileWriter(dir+Constant.PATHRELATIVE+Constant.ENTITYKEY+"\\"+className+".java");
+            FileWriter repositoryFile = new FileWriter(dir+Constant.PATHRELATIVE+Constant.REPOSITORYKEY+"\\"+className+"Repository.java");
             entityFile.write(entityContent);
+            repositoryFile.write(repositoryContent);
             entityFile.close();
+            repositoryFile.close();
             System.out.println("Successfully wrote to the file.");
         } catch (IOException e) {
             System.out.println("An error occurred.");
@@ -88,16 +99,40 @@ public class DBInitializer {
         }
     }
 
-    public Map<String, Map<String, String>> generateClasseFormatFromTable(TableAttributs tableAtts, String primaryKey){
+    public Map<String, Map<String, String>> generateClasseFormatFromTable(TableAttributs tableAtts, Set<String> primaryKey){
         Map<String, Map<String, String>> content = new HashMap<>();
         String[] attributs = tableAtts.getAttributs();
         String[] functions = tableAtts.getFunctions();
-        content = generateFromAttributes(content, attributs, primaryKey);
+        content = generateFromAttributes(content, tableAtts, primaryKey);
         return content;
     }
 
-    private static Map<String, Map<String, String>> generateFromAttributes(Map<String, Map<String, String>> content, String[] attributs, String primaryKey) {
+    private static String processColumn(String column, TableAttributs tableAtts) {
+        try {
+            final String[] result = {column};
+            Arrays.stream(tableAtts.getForientKeys())
+                    .filter(foreignKey -> result[0].toLowerCase().contains(foreignKey.getForienName().toLowerCase()))
+                    .findFirst()
+                    .ifPresent(foreignKey -> result[0] += String.format(" %s%s",
+                            Constant.ISFORIENKEY, foreignKey.getForienClass()));
+            Arrays.stream(tableAtts.getIndexKeys())
+                    .filter(indexKey -> result[0].toLowerCase().contains(indexKey.getIndexName().toLowerCase()))
+                    .findFirst()
+                    .ifPresent(indexKey -> result[0] += String.format(" %s %s", Constant.ISINDEXEDKEY, indexKey.getUnique()));
+
+            return result[0];
+
+        } catch (Exception e) {
+            //log.error("Error occurred during column processing: {}", e.getMessage());
+            return column;
+        }
+    }
+
+    private static Map<String, Map<String, String>> generateFromAttributes(Map<String, Map<String, String>> content, TableAttributs tableAtts, Set<String> primaryKey) {
         ColumnAttributs columnAttributs = new ColumnAttributs();
+        String[] attributesTemp = tableAtts.getAttributs();
+        Arrays.setAll(attributesTemp, index -> processColumn(attributesTemp[index], tableAtts));
+        String[] attributs = tableAtts.getAttributs();
         return IntStream.range(0, attributs.length)
                 .mapToObj(i -> attributs[i]
                         .replaceAll(" +", " ")
@@ -124,6 +159,7 @@ public class DBInitializer {
 
 
     public String NameClass(String name){
+        name = name.substring(0, 1).toUpperCase()+name.substring(1).toLowerCase();
         int index = name.indexOf("_");
         while (index != -1){
             name = name.substring(0, index)+name.substring(index+1, index+2).toUpperCase()+name.substring(index+2);
